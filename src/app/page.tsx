@@ -1,5 +1,6 @@
 import IngestionModule from "@/modules/ingestion";
 import ListingModule from "@/modules/listing"; // On importe le nouveau module
+import ReviewerModule from "@/modules/reviewer"; // Module de révision
 
 export default function Home() {
   return (
@@ -16,6 +17,11 @@ export default function Home() {
       <div className="w-full max-w-4xl border-t pt-12">
         <h2 className="text-xl font-semibold mb-6">Documents extraits</h2>
         <ListingModule />
+      </div>
+
+      {/* Module 3 : Révision */}
+      <div className="w-full max-w-6xl border-t pt-12 pb-24">
+        <ReviewerModule />
       </div>
     </main>
   );
