@@ -14,6 +14,8 @@ import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Sparkles, Search } from "lucide-react";
+import { Sheet, SheetTrigger } from "@/components/ui/sheet";
+import { BethChatPanel } from "./beth-chat-panel";
 
 export function AppHeader() {
   return (
@@ -37,16 +39,22 @@ export function AppHeader() {
       <div className="flex-1 flex justify-center max-w-lg w-full relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input 
-          placeholder="Rechercher un document, un projet, une donnée..." 
+          placeholder="Rechercher sur le système..." 
           className="w-full pl-9 bg-muted/40 border-muted-foreground/20 focus-visible:ring-1 rounded-full shadow-inner" 
         />
       </div>
       
       <div className="flex items-center justify-end gap-5 w-1/3">
-        <Button variant="outline" className="gap-2 text-primary border-primary/20 hover:bg-primary/5 rounded-full shadow-sm hidden md:flex">
-          <Sparkles className="h-4 w-4" />
-          Parler à Beth
-        </Button>
+        <Sheet>
+          <SheetTrigger asChild>
+            <Button variant="outline" className="gap-2 text-primary border-primary/20 hover:bg-primary/5 rounded-full shadow-sm hidden md:flex">
+                <Sparkles className="h-4 w-4" />
+                Parler à Beth
+            </Button>
+          </SheetTrigger>
+          <BethChatPanel />
+        </Sheet>
+
         <div className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity">
           <Avatar className="h-10 w-10 border-2 border-background shadow-sm">
             <AvatarImage src="https://github.com/shadcn.png" alt="Utilisateur" />
