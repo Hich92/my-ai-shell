@@ -21,26 +21,78 @@ import {
   SidebarMenuItem,
   SidebarHeader,
 } from "@/components/ui/sidebar";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Badge } from "@/components/ui/badge";
 
-const pilotageItems = [
+type MenuItem = {
+  title: string;
+  url: string;
+  icon: any;
+  isFuture?: boolean;
+};
+
+const pilotageItems: MenuItem[] = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
 ];
 
-const traitementItems = [
+const traitementItems: MenuItem[] = [
   { title: "Ingestion", url: "/ingestion", icon: UploadCloud },
   { title: "Liste Documents", url: "/extraction", icon: ListTodo },
   { title: "Validation", url: "/validation", icon: CheckCircle },
 ];
 
-const gouvernanceItems = [
-  { title: "Espaces de travail", url: "/projects", icon: FolderKanban },
-  { title: "Modèles", url: "/models", icon: FileSearch },
-  { title: "Audit", url: "/audit", icon: ShieldCheck },
+const gouvernanceItems: MenuItem[] = [
+  { title: "Espaces", url: "/projects", icon: FolderKanban, isFuture: true },
+  { title: "Modèles", url: "/models", icon: FileSearch, isFuture: true },
+  { title: "Audit", url: "/audit", icon: ShieldCheck, isFuture: false },
 ];
 
-const systemeItems = [
-  { title: "Paramètres", url: "/settings", icon: Settings },
+const systemeItems: MenuItem[] = [
+  { title: "Paramètres", url: "/settings", icon: Settings, isFuture: true },
 ];
+
+function renderMenuItem(item: MenuItem) {
+  const ButtonContent = (
+    <a 
+      href={item.isFuture ? '#' : item.url} 
+      className={`font-medium transition-colors w-full flex items-center justify-between ${item.isFuture ? 'text-muted-foreground/50 cursor-not-allowed' : 'text-muted-foreground hover:text-foreground'}`}
+      onClick={(e) => item.isFuture && e.preventDefault()}
+    >
+      <div className="flex items-center">
+        <item.icon className={`h-5 w-5 mr-2 ${item.isFuture ? 'opacity-50' : ''}`} />
+        <span>{item.title}</span>
+      </div>
+      {item.isFuture && (
+         <Badge variant="outline" className="text-[9px] px-1 py-0 border-muted-foreground/20 text-muted-foreground/60 uppercase">Futur</Badge>
+      )}
+    </a>
+  );
+
+  if (item.isFuture) {
+    return (
+      <Tooltip key={item.title}>
+        <TooltipTrigger asChild>
+          <div className="w-full">
+            <SidebarMenuButton asChild tooltip={undefined}>
+               {ButtonContent}
+            </SidebarMenuButton>
+          </div>
+        </TooltipTrigger>
+        <TooltipContent side="right">
+          <p>Fonctionnalité "{item.title}" à venir</p>
+        </TooltipContent>
+      </Tooltip>
+    );
+  }
+
+  return (
+    <SidebarMenuItem key={item.title}>
+      <SidebarMenuButton asChild tooltip={item.title}>
+        {ButtonContent}
+      </SidebarMenuButton>
+    </SidebarMenuItem>
+  );
+}
 
 export function AppSidebar() {
   return (
@@ -58,16 +110,7 @@ export function AppSidebar() {
           <SidebarGroupLabel className="text-xs font-semibold uppercase text-muted-foreground mt-4 tracking-wider">Pilotage</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu className="mt-2 space-y-1">
-              {pilotageItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild tooltip={item.title}>
-                    <a href={item.url} className="font-medium text-muted-foreground hover:text-foreground transition-colors">
-                      <item.icon className="h-5 w-5 mr-1" />
-                      <span>{item.title}</span>
-                    </a>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              {pilotageItems.map(renderMenuItem)}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -77,16 +120,7 @@ export function AppSidebar() {
           <SidebarGroupLabel className="text-xs font-semibold uppercase text-muted-foreground mt-4 tracking-wider">Traitement</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu className="mt-2 space-y-1">
-              {traitementItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild tooltip={item.title}>
-                    <a href={item.url} className="font-medium text-muted-foreground hover:text-foreground transition-colors">
-                      <item.icon className="h-5 w-5 mr-1" />
-                      <span className="truncate">{item.title}</span>
-                    </a>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              {traitementItems.map(renderMenuItem)}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -96,16 +130,7 @@ export function AppSidebar() {
           <SidebarGroupLabel className="text-xs font-semibold uppercase text-muted-foreground mt-4 tracking-wider">Gouvernance</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu className="mt-2 space-y-1">
-              {gouvernanceItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild tooltip={item.title}>
-                    <a href={item.url} className="font-medium text-muted-foreground hover:text-foreground transition-colors">
-                      <item.icon className="h-5 w-5 mr-1" />
-                      <span>{item.title}</span>
-                    </a>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              {gouvernanceItems.map(renderMenuItem)}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -115,16 +140,7 @@ export function AppSidebar() {
           <SidebarGroupLabel className="text-xs font-semibold uppercase text-muted-foreground mt-4 tracking-wider">Système</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu className="mt-2 space-y-1">
-              {systemeItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild tooltip={item.title}>
-                    <a href={item.url} className="font-medium text-muted-foreground hover:text-foreground transition-colors">
-                      <item.icon className="h-5 w-5 mr-1" />
-                      <span>{item.title}</span>
-                    </a>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              {systemeItems.map(renderMenuItem)}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
