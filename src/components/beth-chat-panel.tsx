@@ -5,26 +5,42 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Sparkles, Send } from "lucide-react";
-import { askBeth } from "@/lib/beth-service";
 import { SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
-
-type Message = {
-  id: string;
-  role: "user" | "assistant";
-  content: string;
-};
+import { getChatHistory, sendMessage, MessageDto } from "@/modules/chat/actions";
 
 export function BethChatPanel() {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "init-1",
-      role: "assistant",
-      content: "Bonjour ! Je suis Beth, votre assistante IA souveraine. En quoi puis-je vous aider ?",
-    }
-  ]);
+  const [messages, setMessages] = useState<MessageDto[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Data fetching: Chargement de l'historique au montage
+  useEffect(() => {
+    async function loadHistory() {
+      try {
+        const history = await getChatHistory();
+        if (history.length === 0) {
+          // Message d'accueil par défaut si la base est vide
+          setMessages([
+            {
+              id: "init-1",
+              role: "assistant",
+              content: "Bonjour ! Je suis Beth, votre assistante IA souveraine. Historique initialisé.",
+              createdAt: new Date()
+            }
+          ]);
+        } else {
+          setMessages(history);
+        }
+      } catch (err) {
+        console.error("Impossible de charger l'historique", err);
+      } finally {
+        setIsInitialized(true);
+      }
+    }
+    loadHistory();
+  }, []);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -35,18 +51,36 @@ export function BethChatPanel() {
   const handleSendMessage = async () => {
     if (!input.trim() || isLoading) return;
 
-    const userMsg: Message = { id: Date.now().toString(), role: "user", content: input.trim() };
-    setMessages((prev) => [...prev, userMsg]);
+    const currentInput = input.trim();
+    // Affichage optimiste du message utilisateur
+    const optimisticUserMsg: MessageDto = { 
+        id: "temp-" + Date.now(), 
+        role: "user", 
+        content: currentInput,
+        createdAt: new Date()
+    };
+    
+    setMessages((prev) => [...prev, optimisticUserMsg]);
     setInput("");
     setIsLoading(true);
 
     try {
-      const bethResponse = await askBeth(userMsg.content);
-      const assistantMsg: Message = { id: Date.now().toString() + "-ai", role: "assistant", content: bethResponse };
-      setMessages((prev) => [...prev, assistantMsg]);
+      // Exécution de la Server Action (Data Mutation)
+      const newMessages = await sendMessage(currentInput);
+      
+      // On remplace le message optimiste par la réalité de la DB, et on y ajoute la réponse de l'IA.
+      setMessages((prev) => {
+        const filtered = prev.filter(m => m.id !== optimisticUserMsg.id);
+        return [...filtered, ...newMessages];
+      });
     } catch (error) {
       console.error(error);
-      const errorMsg: Message = { id: Date.now().toString() + "-err", role: "assistant", content: "Désolé, une disjonction est apparue sur la liaison au serveur." };
+      const errorMsg: MessageDto = { 
+          id: "err-" + Date.now(), 
+          role: "assistant", 
+          content: "Désolé, une disjonction est apparue sur la liaison au serveur. (Audit enregistré)",
+          createdAt: new Date()
+      };
       setMessages((prev) => [...prev, errorMsg]);
     } finally {
       setIsLoading(false);
@@ -75,6 +109,11 @@ export function BethChatPanel() {
 
       <ScrollArea className="flex-1 p-4 bg-slate-50/50">
         <div className="flex flex-col gap-4">
+            {!isInitialized && (
+                <div className="flex justify-center items-center text-xs text-muted-foreground animate-pulse p-4">
+                    Synchronisation avec le noyau central...
+                </div>
+            )}
             {messages.map((msg) => (
             msg.role === "assistant" ? (
                 <div key={msg.id} className="flex gap-3 max-w-[85%]">
@@ -120,9 +159,9 @@ export function BethChatPanel() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                disabled={isLoading}
+                disabled={isLoading || !isInitialized}
             />
-            <Button onClick={handleSendMessage} disabled={isLoading || !input.trim()} size="icon" className="rounded-full shadow-md shrink-0 h-11 w-11 bg-primary hover:bg-primary/90">
+            <Button onClick={handleSendMessage} disabled={isLoading || !input.trim() || !isInitialized} size="icon" className="rounded-full shadow-md shrink-0 h-11 w-11 bg-primary hover:bg-primary/90">
                 <Send className="h-4 w-4" />
             </Button>
         </div>

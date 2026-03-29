@@ -9,6 +9,8 @@ import {
   FileSearch,
   ShieldCheck,
   Settings,
+  StickyNote,
+  Users,
 } from "lucide-react";
 import {
   Sidebar,
@@ -20,6 +22,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarHeader,
+  SidebarFooter,
 } from "@/components/ui/sidebar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
@@ -32,19 +35,20 @@ type MenuItem = {
 };
 
 const pilotageItems: MenuItem[] = [
-  { title: "Dashboard", url: "/", icon: LayoutDashboard },
+  { title: "Dashboard", url: "/", icon: LayoutDashboard, isFuture: true },
+  { title: "Contacts", url: "/contacts", icon: Users, isFuture: false },
 ];
 
 const traitementItems: MenuItem[] = [
-  { title: "Ingestion", url: "/ingestion", icon: UploadCloud },
-  { title: "Liste Documents", url: "/extraction", icon: ListTodo },
-  { title: "Validation", url: "/validation", icon: CheckCircle },
+  { title: "Ingestion", url: "/ingestion", icon: UploadCloud, isFuture: true },
+  { title: "Liste Documents", url: "/extraction", icon: ListTodo, isFuture: true },
+  { title: "Validation", url: "/validation", icon: CheckCircle, isFuture: true },
 ];
 
 const gouvernanceItems: MenuItem[] = [
   { title: "Espaces", url: "/projects", icon: FolderKanban, isFuture: true },
   { title: "Modèles", url: "/models", icon: FileSearch, isFuture: true },
-  { title: "Audit", url: "/audit", icon: ShieldCheck, isFuture: false },
+  { title: "Audit", url: "/audit", icon: ShieldCheck, isFuture: true },
 ];
 
 const systemeItems: MenuItem[] = [
@@ -145,6 +149,12 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+
+      <SidebarFooter className="p-4 flex items-center justify-center border-t border-border bg-muted/10">
+         <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-mono font-medium">
+           v{process.env.NEXT_PUBLIC_APP_VERSION || "0.1.0-alpha"}
+         </span>
+      </SidebarFooter>
     </Sidebar>
   );
 }
