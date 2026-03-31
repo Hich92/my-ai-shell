@@ -1,4 +1,4 @@
-import { getNotes, addNote } from "@/modules/notes/actions";
+import { getNotes, createNoteAction } from "@/modules/notes/actions";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -8,13 +8,6 @@ import { StickyNote } from "lucide-react";
 export default async function NotesPage() {
   // Pré-chargement des données côté serveur
   const notes = await getNotes();
-
-  // Definition d'une Server Action in-line pour adapter le form à addNote
-  async function handleAddNote(formData: FormData) {
-    "use server";
-    const content = formData.get("content") as string;
-    await addNote(content);
-  }
 
   return (
     <div className="p-8 max-w-5xl mx-auto space-y-8 animate-in fade-in duration-500">
@@ -35,7 +28,7 @@ export default async function NotesPage() {
             <CardDescription>Enregistrement direct en base de données.</CardDescription>
           </CardHeader>
           <CardContent>
-            <form action={handleAddNote} className="space-y-4 flex flex-col">
+            <form action={createNoteAction} className="space-y-4 flex flex-col">
               <Input 
                 name="content" 
                 placeholder="Votre idée..." 

@@ -1,10 +1,16 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { SidebarProvider } from "@/components/ui/sidebar";
+import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AppSidebar } from "@/components/app-sidebar";
-import { AppHeader } from "@/components/app-header";
+import { Header } from "@/components/layout/Header";
+import { Toaster } from "@/components/ui/sonner";
+import { ThemeProvider } from "@/components/theme-provider";
+import { AppStatusBar } from "@/components/layout/app-status-bar";
+import { ThemeAccentProvider } from "@/components/theme-accent-provider";
+import { BreadcrumbProvider } from "@/components/layout/breadcrumb-context";
+import { Suspense } from "react";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -17,8 +23,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AI Shell - Tableau de bord",
-  description: "Système de traitement souverain et intelligent",
+  title: "AI Shell - Command Center",
+  description: "Sovereign Intelligence Processing System",
 };
 
 export default function RootLayout({
@@ -28,21 +34,36 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="fr"
+      lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex text-sm">
-        <TooltipProvider>
-          <SidebarProvider>
-            <AppSidebar />
-            <div className="flex flex-col flex-1 min-w-0 bg-slate-50/50">
-              <AppHeader />
-              <main className="flex-1 overflow-auto p-6 md:p-8">
-                {children}
-              </main>
-            </div>
-          </SidebarProvider>
-        </TooltipProvider>
+      <body className="min-h-full flex text-sm transition-all duration-300">
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <ThemeAccentProvider>
+            <TooltipProvider>
+              <SidebarProvider>
+                <BreadcrumbProvider>
+                  <AppSidebar />
+                  <SidebarInset className="flex flex-col flex-1 h-screen overflow-hidden bg-muted/50">
+                    <Suspense fallback={<div className="h-14 border-b bg-background" />}>
+                      <Header />
+                      <main className="flex-1 overflow-y-auto pb-9">
+                        {children}
+                      </main>
+                    </Suspense>
+                    <AppStatusBar />
+                  </SidebarInset>
+                </BreadcrumbProvider>
+              </SidebarProvider>
+            </TooltipProvider>
+          </ThemeAccentProvider>
+        </ThemeProvider>
+        <Toaster position="bottom-center" richColors />
       </body>
     </html>
   );

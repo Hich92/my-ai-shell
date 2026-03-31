@@ -1,109 +1,156 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import Link from "next/link";
 import { 
-  UploadCloud, 
-  ListTodo, 
-  CheckCircle, 
+  Users, 
+  Wallet, 
+  FileBox, 
   ShieldCheck, 
-  FolderKanban, 
-  FileSearch, 
   Settings,
-  Users
+  Sparkles,
+  type LucideIcon
 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
+import Link from "next/link";
 
-const apps = [
-  { name: "Contacts", icon: Users, href: "/contacts", isFuture: false },
-  { name: "Ingestion", icon: UploadCloud, href: "/ingestion", isFuture: true },
-  { name: "Documents", icon: ListTodo, href: "/extraction", isFuture: true },
-  { name: "Validation", icon: CheckCircle, href: "/validation", isFuture: true },
-  { name: "Espaces", icon: FolderKanban, href: "/projects", isFuture: true },
-  { name: "Modèles", icon: FileSearch, href: "/models", isFuture: true },
-  { name: "Audit & Logs", icon: ShieldCheck, href: "/audit", isFuture: true },
-  { name: "Paramètres", icon: Settings, href: "/settings", isFuture: true },
+interface NavApp {
+  name: string;
+  description: string;
+  icon: LucideIcon;
+  href: string;
+  isFuture: boolean;
+  tag?: string;
+}
+
+const apps: NavApp[] = [
+  { 
+    name: "Global Registry", 
+    description: "sys_org.entities · Core Directory",
+    icon: Users, 
+    href: "/contacts", 
+    isFuture: false, 
+    tag: "ENTITIES" 
+  },
+  { 
+    name: "Finance Console", 
+    description: "sys_fin.ledger · Ledger Processing",
+    icon: Wallet, 
+    href: "/finance", 
+    isFuture: true, 
+    tag: "LEDGER" 
+  },
+  { 
+    name: "DMS Storage", 
+    description: "sys_io.vault · Archival System",
+    icon: FileBox, 
+    href: "/dms", 
+    isFuture: true, 
+    tag: "VAULT" 
+  },
+  { 
+    name: "Audit Trail", 
+    description: "sys_log.compliance · Security Logs",
+    icon: ShieldCheck, 
+    href: "/audit", 
+    isFuture: true, 
+    tag: "SECURITY" 
+  },
+  { 
+    name: "Beth AI Hub", 
+    description: "sys_cog.nexus · Intelligence Hub",
+    icon: Sparkles, 
+    href: "/beth", 
+    isFuture: true, 
+    tag: "COGNITIVE" 
+  },
+  { 
+    name: "System Settings", 
+    description: "sys_conf.global · Environment",
+    icon: Settings, 
+    href: "/settings", 
+    isFuture: true 
+  },
 ];
 
-export default function Home() {
-  const [mounted, setMounted] = useState(false);
+function Item({ app }: { app: NavApp }) {
+  const Icon = app.icon;
+  
+  return (
+    <Link 
+      href={app.href}
+      className={`
+        group relative flex flex-col p-8 min-h-[14rem]
+        border bg-card/40 hover:bg-muted/40 transition-all duration-300 rounded-xl shadow-none
+        ${app.isFuture ? "opacity-40 grayscale cursor-not-allowed border-dashed" : "hover:border-primary/20 hover:shadow-xl hover:shadow-primary/5"}
+      `}
+      onClick={(e) => app.isFuture && e.preventDefault()}
+    >
+      <div className="flex items-start justify-between mb-auto">
+        <div className={`
+          flex h-12 w-12 items-center justify-center rounded-lg border bg-background/50 shadow-sm
+          transition-all group-hover:scale-110
+          ${!app.isFuture && "group-hover:border-primary/30 group-hover:bg-primary/5"}
+        `}>
+          <Icon className={`h-6 w-6 text-muted-foreground transition-colors ${!app.isFuture && "group-hover:text-primary"}`} />
+        </div>
+        
+        {app.tag && (
+          <span className="text-[9px] font-black tracking-[0.2em] text-muted-foreground uppercase opacity-40 group-hover:opacity-100 transition-opacity">
+            {app.tag}
+          </span>
+        )}
+      </div>
+      
+      <div className="mt-8 space-y-1.5">
+        <h3 className="text-sm font-bold tracking-tight uppercase group-hover:text-foreground transition-colors">
+          {app.name}
+        </h3>
+        <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-tight line-clamp-1 opacity-70">
+          {app.description}
+        </p>
+      </div>
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+      {!app.isFuture && (
+        <div className="absolute top-4 right-4">
+          <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+        </div>
+      )}
+    </Link>
+  );
+}
 
-  if (!mounted) {
-    return (
-      <div className="min-h-[calc(100vh-8rem)] flex flex-col items-center justify-center p-4 py-12">
-        <div className="max-w-4xl w-full">
-          <div className="h-8 w-64 bg-slate-200/50 rounded-md mx-auto mb-12 animate-pulse"></div>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 px-4">
-            {apps.map((_, i) => (
-              <div key={i} className="h-36 bg-card rounded-2xl shadow-sm animate-pulse border border-transparent"></div>
-            ))}
+export default function HomePage() {
+  return (
+    <main className="container mx-auto max-w-7xl px-8 md:px-12 py-16 space-y-20 animate-in fade-in duration-1000">
+      
+      {/* Title / Intro */}
+      <div className="space-y-4 max-w-xl">
+        <h1 className="text-4xl md:text-5xl font-black tracking-tighter uppercase leading-none">
+          AI Shell Hub
+        </h1>
+        <p className="text-[10px] font-bold tracking-[0.3em] text-muted-foreground uppercase opacity-40">
+          Zen Mode • Master Navigation Hub • Operational Control
+        </p>
+      </div>
+
+      {/* Grid Launcher - Master Navigation Template */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {apps.map((app) => (
+          <Item key={app.name} app={app} />
+        ))}
+      </div>
+
+      {/* Launcher Footer */}
+      <div className="pt-12 flex items-center justify-between border-t border-muted/30">
+        <p className="text-[9px] font-bold tracking-widest text-muted-foreground uppercase opacity-25">
+          sys_control.m_hub · Standard Release v1.0
+        </p>
+        <div className="flex items-center gap-4 text-[9px] font-black tracking-[0.2em] text-muted-foreground uppercase opacity-30">
+          <span>Staging</span>
+          <div className="h-1 w-8 bg-muted rounded-full overflow-hidden">
+             <div className="h-full w-1/3 bg-primary" />
           </div>
+          <span>Production</span>
         </div>
       </div>
-    );
-  }
-
-  return (
-    <div className="min-h-[calc(100vh-8rem)] flex flex-col items-center justify-center p-4 py-12">
-      <div className="max-w-4xl w-full">
-        <h1 className="text-3xl font-bold tracking-tight text-center mb-12 text-foreground">
-          Système Opérationnel
-        </h1>
-
-        <TooltipProvider>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 px-4">
-            {apps.map((app) => {
-              const baseCardClass = "group flex flex-col items-center gap-4 p-6 rounded-2xl bg-card border shadow-sm relative transition-all duration-200";
-              const futureClass = "opacity-40 grayscale pointer-events-none border-dashed border-muted";
-              const activeClass = "border-primary/20 hover:shadow-md hover:border-primary/50 cursor-pointer";
-
-              const AppCard = (
-                <div className={`${baseCardClass} ${app.isFuture ? futureClass : activeClass}`}>
-                  {app.isFuture ? (
-                    <Badge variant="outline" className="absolute top-3 right-3 text-[10px] px-2 py-0 border-muted text-muted-foreground">Bientôt disponible</Badge>
-                  ) : (
-                    <Badge variant="default" className="absolute top-3 right-3 text-[10px] px-2 py-0 bg-primary text-primary-foreground hover:bg-primary">Opérationnel</Badge>
-                  )}
-                  
-                  <div className={`h-16 w-16 rounded-2xl flex items-center justify-center transition-transform ${app.isFuture ? 'bg-muted' : 'bg-primary/10 group-hover:scale-105'}`}>
-                    <app.icon className={`h-8 w-8 ${app.isFuture ? 'text-muted-foreground' : 'text-primary'}`} />
-                  </div>
-                  <span className={`font-medium text-sm tracking-wide text-center ${app.isFuture ? 'text-muted-foreground' : 'text-foreground'}`}>
-                    {app.name}
-                  </span>
-                </div>
-              );
-
-              if (app.isFuture) {
-                return (
-                  <Tooltip key={app.name}>
-                    <TooltipTrigger asChild>
-                      {/* Enveloppe span pour permettre le tooltip sur un élément disabled/pointer-events-none */}
-                      <span className="w-full cursor-not-allowed">
-                        {AppCard}
-                      </span>
-                    </TooltipTrigger>
-                    <TooltipContent className="max-w-xs text-center border-primary/20 bg-background/95 backdrop-blur">
-                      <p>Ce module est en cours de déploiement systémique.</p>
-                    </TooltipContent>
-                  </Tooltip>
-                );
-              }
-
-              return (
-                <Link key={app.name} href={app.href} className="w-full focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-2xl block">
-                  {AppCard}
-                </Link>
-              );
-            })}
-          </div>
-        </TooltipProvider>
-      </div>
-    </div>
+    </main>
   );
 }

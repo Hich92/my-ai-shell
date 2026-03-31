@@ -1,4 +1,4 @@
-import ReviewerModule from "@/modules/reviewer";
+import ReviewerModule from "@/components/modules/reviewer-form";
 
 export default function ValidationPage() {
   return (

@@ -1,4 +1,4 @@
-import ListingModule from "@/modules/listing";
+import ListingModule from "@/components/modules/listing-form";
 
 export default function ExtractionPage() {
   return (

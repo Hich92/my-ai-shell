@@ -47,7 +47,7 @@ export default function AuditPage() {
       <div className="space-y-6">
         <h2 className="text-lg font-semibold flex items-center gap-2">
           <ShieldCheck className="h-5 w-5 text-primary" />
-          Gestion de l'Audit
+          Gestion de l&apos;Audit
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Card className="opacity-50 cursor-not-allowed bg-card shadow-sm border-dashed">
@@ -92,15 +92,15 @@ export default function AuditPage() {
          </div>
          
          {/* Fenêtre de terminal */}
-         <div className="rounded-xl overflow-hidden border border-slate-800 shadow-xl bg-slate-950 flex flex-col h-[400px]">
+         <div className="rounded-lg overflow-hidden border border-border shadow-xl bg-background flex flex-col h-[400px]">
            {/* Barre d'entête typée macOS / Linux */}
-           <div className="bg-slate-900 border-b border-slate-800 px-4 py-3 flex items-center gap-2 shrink-0">
+           <div className="bg-muted border-b border-border px-4 py-3 flex items-center gap-2 shrink-0">
               <div className="flex gap-2">
                  <div className="h-3 w-3 rounded-full bg-red-500/80"></div>
                  <div className="h-3 w-3 rounded-full bg-yellow-500/80"></div>
                  <div className="h-3 w-3 rounded-full bg-green-500/80"></div>
               </div>
-              <span className="text-xs text-slate-400 ml-4 font-mono font-medium tracking-wide">/var/log/ai-shell/backend_stream.log</span>
+              <span className="text-xs text-muted-foreground ml-4 font-mono font-medium tracking-wide">/var/log/ai-shell/backend_stream.log</span>
            </div>
            
            <div 
@@ -108,7 +108,7 @@ export default function AuditPage() {
              className="flex-1 p-5 overflow-auto font-mono text-sm leading-relaxed"
            >
              {isLoading && logs.length === 0 ? (
-               <div className="flex items-center gap-2 text-slate-500">
+               <div className="flex items-center gap-2 text-muted-foreground">
                   <span className="animate-pulse">_</span> Montage de la sonde distante...
                </div>
              ) : (
@@ -124,13 +124,13 @@ export default function AuditPage() {
                      ) : log.includes('[DEBUG]') ? (
                         <span className="text-emerald-400 mr-2 font-semibold">[DEBUG]</span>
                      ) : null}
-                     <span className="text-slate-300">
+                     <span className="text-foreground/80">
                        {log.replace(/\[(INFO|WARN|ERROR|DEBUG)\] /g, '')}
                      </span>
                    </div>
                  ))}
                  {!isLoading && (
-                    <div className="mt-4 text-slate-500 animate-pulse font-bold">
+                    <div className="mt-4 text-muted-foreground/60 animate-pulse font-bold">
                       _
                     </div>
                  )}

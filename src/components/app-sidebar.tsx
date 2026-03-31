@@ -1,16 +1,12 @@
 "use client";
 
-import {
-  LayoutDashboard,
-  UploadCloud,
-  ListTodo,
-  CheckCircle,
-  FolderKanban,
-  FileSearch,
-  ShieldCheck,
-  Settings,
-  StickyNote,
-  Users,
+import { 
+  Users, 
+  Wallet, 
+  FileBox, 
+  Settings, 
+  ShieldCheck, 
+  ChevronRight,
 } from "lucide-react";
 import {
   Sidebar,
@@ -19,141 +15,162 @@ import {
   SidebarGroupContent,
   SidebarGroupLabel,
   SidebarMenu,
+  SidebarMenuAction,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarHeader,
   SidebarFooter,
 } from "@/components/ui/sidebar";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 
-type MenuItem = {
-  title: string;
-  url: string;
-  icon: any;
-  isFuture?: boolean;
-};
-
-const pilotageItems: MenuItem[] = [
-  { title: "Dashboard", url: "/", icon: LayoutDashboard, isFuture: true },
-  { title: "Contacts", url: "/contacts", icon: Users, isFuture: false },
+const mainNav = [
+  {
+    title: "Global Registry",
+    description: "sys_org.entities · Core",
+    url: "/contacts",
+    icon: Users,
+  },
+  {
+    title: "Finance Console",
+    description: "sys_fin.ledger · Ledger",
+    url: "/finance",
+    icon: Wallet,
+  },
+  {
+    title: "DMS Storage",
+    description: "sys_io.vault · Archival",
+    url: "/dms",
+    icon: FileBox,
+  },
 ];
 
-const traitementItems: MenuItem[] = [
-  { title: "Ingestion", url: "/ingestion", icon: UploadCloud, isFuture: true },
-  { title: "Liste Documents", url: "/extraction", icon: ListTodo, isFuture: true },
-  { title: "Validation", url: "/validation", icon: CheckCircle, isFuture: true },
+const systemNav = [
+  {
+    title: "Audit Trail",
+    description: "sys_log.compliance",
+    url: "/audit",
+    icon: ShieldCheck,
+  },
+  {
+    title: "System Settings",
+    description: "sys_conf.global",
+    url: "/settings",
+    icon: Settings,
+  },
 ];
-
-const gouvernanceItems: MenuItem[] = [
-  { title: "Espaces", url: "/projects", icon: FolderKanban, isFuture: true },
-  { title: "Modèles", url: "/models", icon: FileSearch, isFuture: true },
-  { title: "Audit", url: "/audit", icon: ShieldCheck, isFuture: true },
-];
-
-const systemeItems: MenuItem[] = [
-  { title: "Paramètres", url: "/settings", icon: Settings, isFuture: true },
-];
-
-function renderMenuItem(item: MenuItem) {
-  const ButtonContent = (
-    <a 
-      href={item.isFuture ? '#' : item.url} 
-      className={`font-medium transition-colors w-full flex items-center justify-between ${item.isFuture ? 'text-muted-foreground/50 cursor-not-allowed' : 'text-muted-foreground hover:text-foreground'}`}
-      onClick={(e) => item.isFuture && e.preventDefault()}
-    >
-      <div className="flex items-center">
-        <item.icon className={`h-5 w-5 mr-2 ${item.isFuture ? 'opacity-50' : ''}`} />
-        <span>{item.title}</span>
-      </div>
-      {item.isFuture && (
-         <Badge variant="outline" className="text-[9px] px-1 py-0 border-muted-foreground/20 text-muted-foreground/60 uppercase">Futur</Badge>
-      )}
-    </a>
-  );
-
-  if (item.isFuture) {
-    return (
-      <Tooltip key={item.title}>
-        <TooltipTrigger asChild>
-          <div className="w-full">
-            <SidebarMenuButton asChild tooltip={undefined}>
-               {ButtonContent}
-            </SidebarMenuButton>
-          </div>
-        </TooltipTrigger>
-        <TooltipContent side="right">
-          <p>Fonctionnalité "{item.title}" à venir</p>
-        </TooltipContent>
-      </Tooltip>
-    );
-  }
-
-  return (
-    <SidebarMenuItem key={item.title}>
-      <SidebarMenuButton asChild tooltip={item.title}>
-        {ButtonContent}
-      </SidebarMenuButton>
-    </SidebarMenuItem>
-  );
-}
 
 export function AppSidebar() {
+  const pathname = usePathname();
+
   return (
-    <Sidebar variant="inset" side="left">
-      <SidebarHeader className="p-4 border-b">
+    <Sidebar variant="inset" side="left" collapsible="icon">
+      <SidebarHeader className="h-14 flex items-center justify-between px-4">
         <div className="flex items-center gap-3">
-           <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-bold text-sm shadow">AI</div>
-           <span className="font-bold text-lg tracking-tight">AI Shell </span>
+          <div className="flex aspect-square size-7 items-center justify-center rounded-md bg-primary text-primary-foreground font-bold select-none text-[10px]">
+            AI
+          </div>
+          <span className="font-bold text-sm tracking-tight truncate group-data-[collapsible=icon]:hidden">
+            Shell OS
+          </span>
         </div>
       </SidebarHeader>
-      
+
       <SidebarContent>
-        {/* PILOTAGE */}
+        {/* MAIN OPERATIONS */}
         <SidebarGroup>
-          <SidebarGroupLabel className="text-xs font-semibold uppercase text-muted-foreground mt-4 tracking-wider">Pilotage</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-2 py-4 group-data-[collapsible=icon]:hidden">
+            Main Operations
+          </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu className="mt-2 space-y-1">
-              {pilotageItems.map(renderMenuItem)}
+            <SidebarMenu>
+              {mainNav.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton
+                    asChild
+                    size="lg"
+                    isActive={pathname.startsWith(item.url)}
+                    tooltip={item.title}
+                  >
+                    <Link href={item.url} className="flex items-center w-full">
+                      <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground shrink-0 transition-transform group-hover:scale-105">
+                        <item.icon className="size-4" />
+                      </div>
+                      <div className="flex flex-col gap-0.5 leading-none ml-3 group-data-[collapsible=icon]:hidden">
+                        <span className="font-bold text-xs">
+                          {item.title}
+                        </span>
+                        <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-tight opacity-70">
+                          {item.description}
+                        </span>
+                      </div>
+                    </Link>
+                  </SidebarMenuButton>
+                  <SidebarMenuAction asChild showOnHover>
+                    <Link href={item.url}>
+                      <ChevronRight className="size-4" />
+                      <span className="sr-only">Open {item.title}</span>
+                    </Link>
+                  </SidebarMenuAction>
+                </SidebarMenuItem>
+              ))}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* TRAITEMENT */}
+        {/* SYSTEM CONTEXT */}
         <SidebarGroup>
-          <SidebarGroupLabel className="text-xs font-semibold uppercase text-muted-foreground mt-4 tracking-wider">Traitement</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-2 py-4 group-data-[collapsible=icon]:hidden">
+            System Context
+          </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu className="mt-2 space-y-1">
-              {traitementItems.map(renderMenuItem)}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        {/* GOUVERNANCE */}
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-xs font-semibold uppercase text-muted-foreground mt-4 tracking-wider">Gouvernance</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu className="mt-2 space-y-1">
-              {gouvernanceItems.map(renderMenuItem)}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        {/* SYSTÈME */}
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-xs font-semibold uppercase text-muted-foreground mt-4 tracking-wider">Système</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu className="mt-2 space-y-1">
-              {systemeItems.map(renderMenuItem)}
+            <SidebarMenu>
+              {systemNav.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton
+                    asChild
+                    size="lg"
+                    isActive={pathname.startsWith(item.url)}
+                    tooltip={item.title}
+                  >
+                    <Link href={item.url} className="flex items-center w-full">
+                      <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-muted text-muted-foreground shrink-0 transition-transform group-hover:scale-105">
+                        <item.icon className="size-4" />
+                      </div>
+                      <div className="flex flex-col gap-0.5 leading-none ml-3 group-data-[collapsible=icon]:hidden">
+                        <span className="font-bold text-xs uppercase tracking-tight">
+                          {item.title}
+                        </span>
+                        <span className="text-[10px] text-muted-foreground leading-none">
+                          {item.description}
+                        </span>
+                      </div>
+                    </Link>
+                  </SidebarMenuButton>
+                  <SidebarMenuAction asChild showOnHover>
+                    <Link href={item.url}>
+                      <ChevronRight className="size-4 opacity-50" />
+                    </Link>
+                  </SidebarMenuAction>
+                </SidebarMenuItem>
+              ))}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="p-4 flex items-center justify-center border-t border-border bg-muted/10">
-         <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-mono font-medium">
-           v{process.env.NEXT_PUBLIC_APP_VERSION || "0.1.0-alpha"}
-         </span>
+      <SidebarFooter className="p-4 gap-2">
+        <div className="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-sidebar-accent group cursor-pointer transition-colors border border-transparent hover:border-sidebar-border group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:hover:bg-transparent">
+          <Avatar className="h-8 w-8 rounded-md border shadow-sm">
+            <AvatarImage src="https://github.com/shadcn.png" alt="Archivist" />
+            <AvatarFallback className="bg-muted text-[10px] font-bold uppercase">AD</AvatarFallback>
+          </Avatar>
+          <div className="flex flex-col min-w-0 leading-tight group-data-[collapsible=icon]:hidden">
+            <span className="text-xs font-bold truncate">Archivist Desk</span>
+            <span className="text-[10px] text-muted-foreground truncate uppercase font-semibold opacity-60 tracking-wider">Lead Instance</span>
+          </div>
+        </div>
       </SidebarFooter>
     </Sidebar>
   );

@@ -33,3 +33,8 @@ export async function addNote(content: string) {
     throw new Error("Impossible d'enregistrer le pense-bête via SQL pur.");
   }
 }
+
+export async function createNoteAction(formData: FormData) {
+  const content = formData.get("content") as string;
+  await addNote(content);
+}

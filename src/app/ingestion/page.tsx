@@ -1,4 +1,4 @@
-import IngestionModule from "@/modules/ingestion";
+import IngestionModule from "@/components/modules/ingestion-form";
 
 export default function IngestionPage() {
   return (

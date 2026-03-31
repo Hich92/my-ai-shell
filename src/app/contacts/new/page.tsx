@@ -1,85 +1,103 @@
 import { createContact, getCompanies, CompanyOption } from "@/modules/contacts/actions";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChevronLeft, KeyRound } from "lucide-react";
-import Link from "next/link";
+import { Label } from "@/components/ui/label";
+import { UserPlus } from "lucide-react";
+import { EntityFrame } from "@/components/layout/entity-frame";
 
 export default async function NewContactPage() {
   const companies = await getCompanies();
 
-  async function handleCreateAction(formData: FormData) {
-    "use server";
-    await createContact(formData);
-  }
-
   return (
-    <div className="p-8 max-w-2xl mx-auto space-y-6 animate-in fade-in duration-500">
-      <div>
-        <Button variant="ghost" asChild className="mb-4 text-muted-foreground hover:text-foreground">
-          <Link href="/contacts">
-            <ChevronLeft className="mr-2 h-4 w-4" /> Retour au référentiel
-          </Link>
-        </Button>
-        <h1 className="text-3xl font-bold tracking-tight">Nouvelle Entité</h1>
-        <p className="text-muted-foreground">Création sous le schéma sys_org Odoo-grade.</p>
-      </div>
+    <EntityFrame
+      title="New Entity"
+      subtitle="Creation · sys_org schema"
+      breadcrumb={[
+        { label: "Contacts", href: "/contacts" },
+        { label: "New Contact", href: "#" },
+      ]}
+      icon={UserPlus}
+      creationMode={true}
+      submitFormId="new-contact-form"
+    >
+      {/* ──────────────────────────────────────────
+          FORM (ID linked to Dock buttons via Shell)
+      ────────────────────────────────────────── */}
+      <form id="new-contact-form" action={createContact} className="space-y-6">
 
-      <Card className="shadow-sm border-muted/60">
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <KeyRound className="h-4 w-4 text-amber-500" />
-            <CardTitle>Identifiants Métiers</CardTitle>
+        {/* Entity Name */}
+        <div className="space-y-2">
+          <Label htmlFor="new-name">Entity Name *</Label>
+          <Input
+            id="new-name"
+            name="name"
+            placeholder="e.g. Acme Corp..."
+            required
+            autoFocus
+            className="bg-muted/50 focus-visible:ring-1"
+          />
+        </div>
+
+        {/* Email + Phone */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="new-email">Contact Email</Label>
+            <Input
+              id="new-email"
+              name="email"
+              type="email"
+              placeholder="hello@acme.com"
+              className="bg-muted/50 focus-visible:ring-1"
+            />
           </div>
-          <CardDescription>Les champs marqués d'un * sont obligatoires pour la base Postgres.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form action={handleCreateAction} className="space-y-6">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Nom de l'entité *</label>
-              <Input name="name" placeholder="Ex: Acme Corp..." required className="bg-muted/50 focus-visible:ring-1" autoFocus />
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="new-phone">Direct Line</Label>
+            <Input
+              id="new-phone"
+              name="phone"
+              placeholder="+33 1 00 00 00 00"
+              className="bg-muted/50 focus-visible:ring-1"
+            />
+          </div>
+        </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Email de contact</label>
-                <Input name="email" type="email" placeholder="hello@acme.com" className="bg-muted/50 focus-visible:ring-1" />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Ligne directe</label>
-                <Input name="phone" placeholder="+33 1 00 00 00 00" className="bg-muted/50 focus-visible:ring-1" />
-              </div>
-            </div>
+        {/* B2B Company Checkbox */}
+        <div className="flex items-center space-x-3 border border-primary/15 rounded-lg p-4 bg-accent/50">
+          <input
+            type="checkbox"
+            id="is_company"
+            name="is_company"
+            className="w-4 h-4 accent-primary rounded cursor-pointer"
+          />
+          <Label htmlFor="is_company" className="text-sm font-semibold leading-none cursor-pointer">
+            Declare this entity as a Professional Company (B2B)
+          </Label>
+        </div>
 
-            <div className="flex items-center space-x-2 border border-blue-100 rounded-md p-4 bg-blue-50/50">
-              <input type="checkbox" id="is_company" name="is_company" className="w-4 h-4 accent-blue-600 rounded cursor-pointer" />
-              <label htmlFor="is_company" className="text-sm font-semibold text-blue-900 leading-none cursor-pointer">
-                Déclarer cette entité en tant que Société professionnelle (B2B)
-              </label>
-            </div>
+        {/* Parent Company Association */}
+        <div className="space-y-2">
+          <Label htmlFor="new-parent">Parent Association (Optional)</Label>
+          <select
+            id="new-parent"
+            name="parent_id"
+            className="flex h-10 w-full rounded-md border border-input bg-muted/50 px-3 py-2 text-sm ring-offset-background disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus:ring-1 focus:ring-ring"
+          >
+            <option value="">— No Association —</option>
+            {companies.map((company: CompanyOption) => (
+              <option key={company.id} value={company.id}>
+                🏢 {company.name}
+              </option>
+            ))}
+          </select>
+          <p className="text-xs text-muted-foreground">
+            If the entity is an individual working for an existing company, please select it.
+          </p>
+        </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Rattachement (Optionnel)</label>
-              <select 
-                name="parent_id" 
-                className="flex h-10 w-full rounded-md border border-input bg-muted/50 px-3 py-2 text-sm ring-offset-background disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <option value="">-- Aucun rattachement --</option>
-                {companies.map((company: CompanyOption) => (
-                  <option key={company.id} value={company.id}>🏢 {company.name}</option>
-                ))}
-              </select>
-              <p className="text-xs text-muted-foreground mt-1">Si l'entité est un individu œuvrant pour une société existante, veuillez la sélectionner.</p>
-            </div>
-
-            <div className="pt-4 border-t border-muted">
-              <Button type="submit" className="w-full">
-                Graver en base de données
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
-    </div>
+        {/* Accessible fallback button */}
+        <button type="submit" className="sr-only" aria-hidden="true">
+          Create Entity
+        </button>
+      </form>
+    </EntityFrame>
   );
 }

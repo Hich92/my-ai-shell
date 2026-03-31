@@ -1,29 +1,32 @@
 "use server";
 
 import { pool } from "@/lib/db";
+import { prisma } from "@/lib/prisma";
+import { logAudit } from "@/modules/core/actions";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 export type EntityContact = {
-  id: string; // CHANGÉ : UUID = string
+  id: string; 
   name: string;
   is_company: boolean;
   email: string | null;
   phone: string | null;
-  parent_id: string | null; // CHANGÉ : UUID = string
+  parent_id: string | null; 
   created_at: Date;
   is_active: boolean;
   parent_name?: string | null;
 };
 
 export type CompanyOption = {
-  id: string; // CHANGÉ : UUID = string
+  id: string; 
   name: string;
 };
 
 // ==========================================
 // 1. LECTURE & PAGINATION & RECHERCHE
 // ==========================================
+
 export async function getContacts(page: number = 1, limit: number = 10, isActive: boolean = true, searchQuery: string = "") {
   const offset = (page - 1) * limit;
 
@@ -37,8 +40,8 @@ export async function getContacts(page: number = 1, limit: number = 10, isActive
       LEFT JOIN sys_org.m_entities p ON e.parent_id = p.id
       WHERE e.is_active = $1
     `;
-    const paramsCount: any[] = [isActive];
-    const paramsData: any[] = [isActive];
+    const paramsCount: unknown[] = [isActive];
+    const paramsData: unknown[] = [isActive];
 
     if (searchFilter) {
       countQuery += ` AND e.name ILIKE $2`;
@@ -74,18 +77,53 @@ export async function getCompanies(): Promise<CompanyOption[]> {
   try {
     const res = await pool.query(`SELECT id, name FROM sys_org.m_entities WHERE is_company = true AND is_active = true ORDER BY name ASC`);
     return res.rows as CompanyOption[];
-  } catch (error) {
+  } catch {
     return [];
   }
 }
 
 export async function getContactById(id: string): Promise<EntityContact | null> {
   try {
-    const res = await pool.query(`SELECT * FROM sys_org.m_entities WHERE id = $1`, [id]);
-    if (res.rowCount === 0) return null;
-    return res.rows[0] as EntityContact;
+    const contact = await prisma.entity.findUnique({
+      where: { id },
+    });
+    
+    if (!contact) return null;
+
+    return {
+      id: contact.id,
+      name: contact.name,
+      is_company: contact.isCompany,
+      email: contact.email,
+      phone: contact.phone,
+      parent_id: contact.parentId,
+      created_at: contact.createdAt,
+      is_active: contact.isActive,
+    } as EntityContact;
   } catch (error) {
-    console.error("Erreur getContactById:", error);
+    console.error("Erreur getContactById (Prisma):", error);
+    return null;
+  }
+}
+
+/**
+ * Fetch Entity with its related Notes (Chatter)
+ * cross-schema: sys_org.m_entities <-> core.t_notes
+ */
+export async function getContactWithNotes(id: string) {
+  try {
+    const contact = await prisma.entity.findUnique({
+      where: { id },
+      include: {
+        notes: {
+          orderBy: { createdAt: 'desc' }
+        }
+      }
+    });
+
+    return contact;
+  } catch (error) {
+    console.error("Erreur getContactWithNotes:", error);
     return null;
   }
 }
@@ -93,40 +131,36 @@ export async function getContactById(id: string): Promise<EntityContact | null> 
 // ==========================================
 // 2. ÉCRITURE MÉTIER
 // ==========================================
+
 export async function createContact(formData: FormData) {
   const name = formData.get("name") as string;
   const is_company = formData.get("is_company") === "on";
   const email = formData.get("email") as string | null;
   const phone = formData.get("phone") as string | null;
   const parent_id_raw = formData.get("parent_id") as string | null;
-  
-  // SÉCURITÉ UUID : Si vide, on envoie null, pas une string vide
   const parent_id = (parent_id_raw === "" || !parent_id_raw) ? null : parent_id_raw;
 
   if (!name || name.trim() === "") throw new Error("Nom obligatoire.");
 
-  const client = await pool.connect();
   try {
-    await client.query("BEGIN");
-    await client.query(
-      `INSERT INTO sys_org.m_entities (name, is_company, email, phone, parent_id) VALUES ($1, $2, $3, $4, $5)`,
-      [name.trim(), is_company, email || null, phone || null, parent_id]
-    );
-    await client.query(
-      `INSERT INTO core.t_audit (module_name, action_type, severity, details) VALUES ($1, $2, $3, $4)`,
-      ['ORG', 'INSERT', 'INFO', JSON.stringify({ name: name.trim(), is_company, parent_id })]
-    );
-    await client.query("COMMIT");
-  } catch (error) {
-    await client.query("ROLLBACK");
-    console.error("Erreur Create:", error);
-    throw new Error("Impossible de créer l'entité.");
-  } finally {
-    client.release();
-  }
+    const entity = await prisma.entity.create({
+      data: {
+        name: name.trim(),
+        isCompany: is_company,
+        email: email || null,
+        phone: phone || null,
+        parentId: parent_id,
+      }
+    });
 
-  revalidatePath("/contacts");
-  redirect("/contacts");
+    await logAudit(entity.id, "INSERT", { name: entity.name, is_company, parent_id });
+
+    revalidatePath("/contacts");
+    redirect("/contacts");
+  } catch (error) {
+    console.error("Erreur Create (Prisma):", error);
+    throw new Error("Impossible de créer l'entité.");
+  }
 }
 
 export async function updateContact(id: string, formData: FormData) {
@@ -135,54 +169,47 @@ export async function updateContact(id: string, formData: FormData) {
   const email = formData.get("email") as string | null;
   const phone = formData.get("phone") as string | null;
   const parent_id_raw = formData.get("parent_id") as string | null;
-  
-  // SÉCURITÉ UUID : On ne parseInt pas un UUID !
   const parent_id = (parent_id_raw === "" || !parent_id_raw) ? null : parent_id_raw;
 
   if (!name || name.trim() === "") throw new Error("Nom obligatoire.");
 
-  const client = await pool.connect();
   try {
-    await client.query("BEGIN");
-    await client.query(
-      `UPDATE sys_org.m_entities SET name = $1, is_company = $2, email = $3, phone = $4, parent_id = $5, updated_at = NOW() WHERE id = $6`,
-      [name.trim(), is_company, email || null, phone || null, parent_id, id]
-    );
-    await client.query(
-      `INSERT INTO core.t_audit (module_name, action_type, severity, details) VALUES ($1, $2, $3, $4)`,
-      ['ORG', 'UPDATE', 'INFO', JSON.stringify({ id, name: name.trim(), parent_id })]
-    );
-    await client.query("COMMIT");
-  } catch (error) {
-    await client.query("ROLLBACK");
-    console.error("Erreur Update SQL détaillée:", error);
-    throw new Error("Impossible de mettre à jour l'entité.");
-  } finally {
-    client.release();
-  }
+    const updated = await prisma.entity.update({
+      where: { id },
+      data: {
+        name: name.trim(),
+        isCompany: is_company,
+        email: email || null,
+        phone: phone || null,
+        parentId: parent_id,
+      }
+    });
 
-  revalidatePath("/contacts");
-  redirect("/contacts");
+    await logAudit(id, "UPDATE", { name: updated.name, parent_id });
+
+    revalidatePath("/contacts");
+    redirect("/contacts");
+  } catch (error) {
+    console.error("Erreur Update (Prisma):", error);
+    throw new Error("Impossible de mettre à jour l'entité.");
+  }
 }
 
 // ==========================================
 // 3. ARCHIVAGE & RESTAURATION
 // ==========================================
+
 async function toggleArchiveStatus(id: string, targetStatus: boolean, actionType: string) {
-  const client = await pool.connect();
   try {
-    await client.query("BEGIN");
-    await client.query(`UPDATE sys_org.m_entities SET is_active = $1 WHERE id = $2`, [targetStatus, id]);
-    await client.query(
-      `INSERT INTO core.t_audit (module_name, action_type, severity, details) VALUES ($1, $2, $3, $4)`,
-      ['ORG', actionType, 'INFO', JSON.stringify({ id, target_active_status: targetStatus })]
-    );
-    await client.query("COMMIT");
+    await prisma.entity.update({
+      where: { id },
+      data: { isActive: targetStatus }
+    });
+
+    await logAudit(id, actionType, { target_active_status: targetStatus });
   } catch (error) {
-    await client.query("ROLLBACK");
+    console.error("Erreur toggleArchiveStatus (Prisma):", error);
     throw new Error(`Suspension système : impossible d'appliquer le statut.`);
-  } finally {
-    client.release();
   }
   
   revalidatePath("/contacts");
@@ -196,4 +223,60 @@ export async function archiveContact(formData: FormData) {
 export async function restoreContact(formData: FormData) {
   const id = formData.get("id") as string;
   if (id) await toggleArchiveStatus(id, true, "RESTORE");
+}
+
+// ==========================================
+// 4. MISE À JOUR SANS REDIRECTION (pour le client component)
+// ==========================================
+
+export type UpdateResult = {
+  success: boolean;
+  error?: string;
+  updatedFields?: { name: string };
+};
+
+/**
+ * Identique à updateContact mais SANS redirect.
+ */
+export async function updateContactInPlace(
+  id: string,
+  formData: FormData
+): Promise<UpdateResult> {
+  const name = formData.get("name") as string;
+  const is_company = formData.get("is_company") === "on";
+  const email = formData.get("email") as string | null;
+  const phone = formData.get("phone") as string | null;
+  const parent_id_raw = formData.get("parent_id") as string | null;
+  const parent_id = !parent_id_raw ? null : parent_id_raw;
+
+  if (!name || !name.trim()) {
+    return { success: false, error: "Le nom de l'entité est obligatoire." };
+  }
+
+  try {
+    const updated = await prisma.entity.update({
+      where: { id },
+      data: {
+        name: name.trim(),
+        isCompany: is_company,
+        email: email || null,
+        phone: phone || null,
+        parentId: parent_id,
+      }
+    });
+
+    // Relational Bridge: Log to core.t_audit (Odoo-style)
+    await logAudit(id, "UPDATE", { 
+        name: updated.name,
+        system_action: "IN_PLACE_UPDATE"
+    });
+
+    revalidatePath(`/contacts/${id}`);
+    revalidatePath("/contacts");
+
+    return { success: true, updatedFields: { name: updated.name } };
+  } catch (error) {
+    console.error("[contacts/actions] updateContactInPlace (Prisma) error:", error);
+    return { success: false, error: "Relational update failed." };
+  }
 }
